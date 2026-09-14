@@ -174,55 +174,79 @@ async def download_video(video_id: str, quality: str = Query("720")):
 
 @router.get("/iptv/channels")
 async def get_iptv_channels(country: str = Query(""), category: str = Query("")):
+    """Get free legal IPTV channels from iptv-org"""
     import httpx
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             channels_res = await client.get("https://iptv-org.github.io/api/channels.json")
             logos_res = await client.get("https://iptv-org.github.io/api/logos.json")
             streams_res = await client.get("https://iptv-org.github.io/api/streams.json")
-            feeds_res = await client.get("https://iptv-org.github.io/api/feeds.json")
 
             channels = channels_res.json()
             logos = logos_res.json()
             streams = streams_res.json()
-            feeds = feeds_res.json() if feeds_res.status_code == 200 else []
 
-            # DEBUG counts
-            channels_with_logo = 0
-            channels_with_stream = 0
-            channels_with_both = 0
+            # Logo lookup — first logo per channel
+            logo_map = {}
+            for l in logos:
+                cid = l.get("channel")
+                if cid and cid not in logo_map and l.get("url"):
+                    logo_map[cid] = l["url"]
 
-            logo_channels = set(l.get("channel") for l in logos if l.get("channel"))
-            stream_channels = set(s.get("channel") for s in streams if s.get("channel"))
-            feed_channels = set(f.get("channel") for f in feeds if f.get("channel"))
+            # Stream lookup — only streams with direct channel reference
+            stream_map = {}
+            for s in streams:
+                if s.get("status") != "online":
+                    continue
+                cid = s.get("channel")
+                if cid and cid not in stream_map:
+                    stream_map[cid] = s.get("url")
 
+            # Debug counts
+            with_logo = len(logo_map)
+            with_stream = len(stream_map)
+            both = len(set(logo_map.keys()) & set(stream_map.keys()))
+
+            # Build filtered channel list
+            filtered = []
             for c in channels:
                 cid = c.get("id")
-                if cid in logo_channels:
-                    channels_with_logo += 1
-                if cid in stream_channels or cid in feed_channels:
-                    channels_with_stream += 1
-                if cid in logo_channels and (cid in stream_channels or cid in feed_channels):
-                    channels_with_both += 1
+                if not cid:
+                    continue
+                logo = logo_map.get(cid)
+                stream = stream_map.get(cid)
+                if not logo or not stream:
+                    continue
+
+                if country and c.get("country") != country.upper():
+                    continue
+                if category:
+                    cats = [cat.lower() for cat in c.get("categories", [])]
+                    if category.lower() not in cats:
+                        continue
+
+                filtered.append({
+                    "id": cid,
+                    "name": c.get("name"),
+                    "country": c.get("country"),
+                    "categories": c.get("categories", []),
+                    "logo": logo,
+                    "website": c.get("website"),
+                    "streamUrl": stream,
+                })
+
+            filtered.sort(key=lambda x: x["name"].lower() if x.get("name") else "")
 
             return {
                 "success": True,
                 "debug": {
-                    "channels_count": len(channels),
-                    "logos_count": len(logos),
-                    "streams_count": len(streams),
-                    "feeds_count": len(feeds),
-                    "unique_logo_channels": len(logo_channels),
-                    "unique_stream_channels": len(stream_channels),
-                    "unique_feed_channels": len(feed_channels),
-                    "channels_with_logo": channels_with_logo,
-                    "channels_with_stream": channels_with_stream,
-                    "channels_with_both": channels_with_both,
-                    "feeds_status": feeds_res.status_code,
-                    "first_feed": feeds[0] if feeds else None,
+                    "channels_with_logo": with_logo,
+                    "channels_with_stream": with_stream,
+                    "channels_with_both": both,
+                    "final_count": len(filtered),
                 },
-                "data": [],
-                "total": 0
+                "data": filtered[:600],
+                "total": len(filtered),
             }
     except Exception as e:
         import traceback
