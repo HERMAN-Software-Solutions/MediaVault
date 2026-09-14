@@ -5,6 +5,7 @@ import { useSong } from "@/lib/song-context";
 import { useParams } from "next/navigation";
 import { Layout } from "@/components/layout/Layout";
 import { getSongDetails } from "@/lib/api";
+import { YouTubePlayer } from "@/components/shared/YouTubePlayer";
 
 export default function SongPageClient() {
   const { id } = useParams<{ id: string }>();
@@ -164,12 +165,7 @@ export default function SongPageClient() {
           <div className="lg:w-[65%] ">
             <div className="z-30 bg-black">
               <div className="aspect-video relative">
-                <iframe
-                  src={`https://www.youtube.com/embed/${id}?autoplay=1&controls=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media"
-                />
+                <YouTubePlayer videoId={id} autoplay={true} />
                 <button onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                   className="download-bounce absolute top-1/2 right-4 -translate-y-1/2 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-[#00C2BA]/80 backdrop-blur-md text-white shadow-lg border border-white/20 hover:bg-[#00C2BA] hover:scale-105 transition-all duration-200"
                   aria-label="Download"

@@ -65,8 +65,11 @@ export function MiniPlayer() {
     >
       {/* Video area */}
       <div className="relative aspect-video bg-black">
-        <YouTubePlayer videoId={currentSong.id} autoplay={isPlaying} />
-
+        <YouTubePlayer
+          videoId={currentSong.id}
+          autoplay={isPlaying}
+          controls={false}
+        />
         {/* DRAG OVERLAY - captures all drag events */}
         <div
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
