@@ -9,17 +9,21 @@
   }
   body {
     @apply font-sans text-base text-charcoal bg-white;
+    @apply dark:bg-navy-dark dark:text-gray-light;
   }
-  h1 { @apply text-3xl md:text-5xl font-bold text-navy leading-tight tracking-tight; }
-  h2 { @apply text-2xl md:text-4xl font-bold text-navy leading-tight tracking-tight; }
-  h3 { @apply text-xl md:text-2xl font-semibold text-navy; }
-  h4 { @apply text-lg font-semibold text-navy; }
+  h1 { @apply text-3xl md:text-5xl font-bold text-navy leading-tight tracking-tight dark:text-white; }
+  h2 { @apply text-2xl md:text-4xl font-bold text-navy leading-tight tracking-tight dark:text-white; }
+  h3 { @apply text-xl md:text-2xl font-semibold text-navy dark:text-white; }
+  h4 { @apply text-lg font-semibold text-navy dark:text-white; }
 }
 
 @layer components {
   .container-site { @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8; }
   .section-padding { @apply py-12 md:py-16; }
-  .card-base { @apply bg-white border border-gray-light rounded-card; }
+  .card-base { 
+    @apply bg-white border border-gray-light rounded-card; 
+    @apply dark:bg-navy-light dark:border-white/10;
+  }
 }
 
 @keyframes downloadBounce {

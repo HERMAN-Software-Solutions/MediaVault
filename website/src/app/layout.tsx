@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "googlee083547305f9a958",
+    google: "e083547305f9a958",
   },
 };
 
@@ -170,7 +170,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin="anonymous"
         />
       </head>
-      <body className="flex min-h-screen flex-col bg-white text-charcoal dark:bg-navy-dark dark:text-gray-light transition-colors">
+      <body className="flex min-h-screen flex-col transition-colors">
         <SongProvider>
           {children}
           <MiniPlayer />
