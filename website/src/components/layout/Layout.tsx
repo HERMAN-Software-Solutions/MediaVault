@@ -11,9 +11,9 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { label: "Home", href: "/" },
   { label: "Search", href: "/search" },
+  { label: "Live TV", href: "/tv" },
   { label: "Desktop App", href: "/desktop" },
   { label: "About", href: "/about" },
-  { label: "TikTok", href: "/tiktok" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -76,7 +76,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><a href="/" className="text-xs text-gray-medium hover:text-teal transition-colors">Home</a></li>
                 <li><a href="/search" className="text-xs text-gray-medium hover:text-teal transition-colors">Search</a></li>
                 <li><a href="/about" className="text-xs text-gray-medium hover:text-teal transition-colors">About</a></li>
-                <li><a href="/tiktok" className="text-xs text-gray-medium hover:text-teal transition-colors">TikTok</a></li>
+                <li><a href="/tv" className="text-xs text-gray-medium hover:text-teal transition-colors">Live TV</a></li>
                 <li><a href="/contact" className="text-xs text-gray-medium hover:text-teal transition-colors">Contact</a></li>
                 <li><a href="/privacy" className="text-xs text-gray-medium hover:text-teal transition-colors">Privacy</a></li>
               </ul>

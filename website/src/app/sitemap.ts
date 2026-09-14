@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/about`, changeFrequency: "monthly" as const, priority: 0.8 },
     { url: `${baseUrl}/contact`, changeFrequency: "monthly" as const, priority: 0.7 },
     { url: `${baseUrl}/privacy`, changeFrequency: "monthly" as const, priority: 0.5 },
-    { url: `${baseUrl}/tiktok`, changeFrequency: "daily" as const, priority: 0.8 },
+    { url: `${baseUrl}/tv`, lastModified: now, changeFrequency: "daily" as const, priority: 0.9 },
     { url: `${baseUrl}/desktop`, lastModified: now, changeFrequency: "weekly" as const, priority: 0.9 },
   ];
 
