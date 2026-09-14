@@ -177,8 +177,7 @@ async def get_iptv_channels(country: str = Query(""), category: str = Query(""))
     """Get free legal IPTV channels from iptv-org"""
     import httpx
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            # Fetch channels + logos + streams in parallel
+        async with httpx.AsyncClient(timeout=60) as client:
             channels_res = await client.get("https://iptv-org.github.io/api/channels.json")
             logos_res = await client.get("https://iptv-org.github.io/api/logos.json")
             streams_res = await client.get("https://iptv-org.github.io/api/streams.json")
@@ -187,58 +186,20 @@ async def get_iptv_channels(country: str = Query(""), category: str = Query(""))
             logos = logos_res.json()
             streams = streams_res.json()
 
-            # Build logo lookup
-            logo_map = {}
-            for l in logos:
-                if l.get("channel") and l.get("url"):
-                    # Prefer smaller logos (faster load)
-                    if l["channel"] not in logo_map:
-                        logo_map[l["channel"]] = l["url"]
-
-            # Build stream count lookup (only online streams)
-            stream_map = {}
-            for s in streams:
-                cid = s.get("channel")
-                if cid and s.get("status") == "online":
-                    stream_map[cid] = s.get("url")
-
-            # Filter and build response — only include channels with logos AND online streams
-            filtered = []
-            for c in channels:
-                cid = c.get("id")
-                if not cid:
-                    continue
-
-                # Must have a logo
-                logo = logo_map.get(cid)
-                if not logo:
-                    continue
-
-                # Must have an online stream
-                if cid not in stream_map:
-                    continue
-
-                # Country filter
-                if country and c.get("country") != country.upper():
-                    continue
-
-                # Category filter
-                if category:
-                    cats = [cat.lower() for cat in c.get("categories", [])]
-                    if category.lower() not in cats:
-                        continue
-
-                filtered.append({
-                    "id": cid,
-                    "name": c.get("name"),
-                    "country": c.get("country"),
-                    "categories": c.get("categories", []),
-                    "logo": logo,
-                    "website": c.get("website"),
-                    "streamUrl": stream_map.get(cid),  # Include stream URL directly!
-                })
-
-            return {"success": True, "data": filtered[:500], "total": len(filtered)}
+            # DEBUG: return counts and samples
+            return {
+                "success": True,
+                "debug": {
+                    "channels_count": len(channels),
+                    "logos_count": len(logos),
+                    "streams_count": len(streams),
+                    "first_channel": channels[0] if channels else None,
+                    "first_logo": logos[0] if logos else None,
+                    "first_stream": streams[0] if streams else None,
+                },
+                "data": [],
+                "total": 0
+            }
     except Exception as e:
         return {"success": False, "error": str(e), "data": []}
 
