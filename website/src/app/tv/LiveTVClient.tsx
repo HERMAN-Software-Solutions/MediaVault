@@ -26,17 +26,22 @@ export function LiveTVClient() {
 
   // Load channels and streams on mount
   useEffect(() => {
-    Promise.all([getIPTVChannels(), getIPTVStreams()])
-      .then(([channelsRes, streamsRes]) => {
-        if (channelsRes.success) {
-          setChannels(channelsRes.data || []);
-        }
-        if (streamsRes.success) {
-          setStreams(streamsRes.data || {});
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+  getIPTVChannels()
+    .then((res) => {
+      if (res.success) {
+        setChannels(res.data || []);
+        // Build streams map from channel data
+        const streamsMap: Record<string, any> = {};
+        (res.data || []).forEach((c: any) => {
+          if (c.streamUrl) {
+            streamsMap[c.id] = { url: c.streamUrl };
+          }
+        });
+        setStreams(streamsMap);
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
   }, []);
 
   // Filter channels
