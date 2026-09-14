@@ -15,6 +15,7 @@ const GITHUB_RELEASES = "https://github.com/jiangsalim/Media-Vault-Desktop/relea
 export default function DesktopPage() {
   return (
     <Layout>
+      {/* Hero */}
       <section className="py-16 md:py-24 bg-navy text-white">
         <div className="container-site max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
@@ -50,6 +51,7 @@ export default function DesktopPage() {
         </div>
       </section>
 
+      {/* Features */}
       <section className="section-padding bg-white dark:bg-navy-dark">
         <div className="container-site max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-navy dark:text-white text-center mb-12">
@@ -67,15 +69,19 @@ export default function DesktopPage() {
               { title: "Auto Updates", desc: "Get new features automatically without re-downloading." },
               { title: "Privacy First", desc: "No tracking. Everything runs locally on your machine." },
             ].map((f) => (
-              <div key={f.title} className="card-base p-6 hover:shadow-cardHover transition-shadow">
+              <div
+                key={f.title}
+                className="rounded-xl bg-white dark:bg-navy-light border border-gray-light dark:border-white/10 p-6 hover:shadow-cardHover transition-shadow"
+              >
                 <h3 className="text-lg font-bold text-navy dark:text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-charcoal dark:text-gray-light">{f.desc}</p>
+                <p className="text-sm text-charcoal dark:text-gray-300 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Installation Steps */}
       <section className="section-padding bg-gray-light dark:bg-navy">
         <div className="container-site max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-navy dark:text-white text-center mb-12">
@@ -89,13 +95,16 @@ export default function DesktopPage() {
               { step: 3, title: "Run the installer", desc: "Double-click the file and follow the on-screen instructions." },
               { step: 4, title: "Start downloading", desc: "Paste any YouTube URL, choose your format, and download." },
             ].map((item) => (
-              <div key={item.step} className="flex gap-4 items-start card-base p-6">
+              <div
+                key={item.step}
+                className="flex gap-4 items-start rounded-xl bg-white dark:bg-navy-light border border-gray-light dark:border-white/10 p-6"
+              >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold">
                   {item.step}
                 </div>
                 <div>
                   <h3 className="font-bold text-navy dark:text-white mb-1">{item.title}</h3>
-                  <p className="text-sm text-charcoal dark:text-gray-light">{item.desc}</p>
+                  <p className="text-sm text-charcoal dark:text-gray-300 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -119,6 +128,7 @@ export default function DesktopPage() {
         </div>
       </section>
 
+      {/* Android CTA */}
       <section className="py-16 bg-navy text-white text-center">
         <div className="container-site">
           <h2 className="text-2xl font-bold mb-4">Also available for Android</h2>
