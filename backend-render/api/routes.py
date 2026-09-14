@@ -186,21 +186,19 @@ async def get_iptv_channels(country: str = Query(""), category: str = Query(""))
             logos = logos_res.json()
             streams = streams_res.json()
 
-            # Logo lookup — first logo per channel
+            # Logo lookup
             logo_map = {}
             for l in logos:
                 cid = l.get("channel")
-                if cid and cid not in logo_map and l.get("url"):
+                if cid and l.get("url") and cid not in logo_map:
                     logo_map[cid] = l["url"]
 
-            # Stream lookup — only streams with direct channel reference
+            # Stream lookup — NO status filter, use channel field directly
             stream_map = {}
             for s in streams:
-                if s.get("status") != "online":
-                    continue
                 cid = s.get("channel")
-                if cid and cid not in stream_map:
-                    stream_map[cid] = s.get("url")
+                if cid and s.get("url") and cid not in stream_map:
+                    stream_map[cid] = s["url"]
 
             # Debug counts
             with_logo = len(logo_map)
