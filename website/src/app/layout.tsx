@@ -112,9 +112,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     sameAs: [
       "https://x.com/JiangSalim1",
       "https://www.tiktok.com/@jaingsalim1",
-      "https://www.facebook.com/jiangsalim1",
+      "https://www.tiktok.com/@hermansoftwaresolutions?_r=1&_t=ZS-99ixYNadBBK",
       "https://www.instagram.com/jiang_salim",
-      "https://youtube.com/@jaingsalim1845",
+      "https://www.youtube.com/@HermanSoftwareSolutions",
     ],
   };
 

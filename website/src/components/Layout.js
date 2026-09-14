@@ -30,9 +30,9 @@ export default function Layout({ children }) {
             <h4 style={{fontSize:13,fontWeight:700,marginBottom:8,color:'#1a1a1a'}}>MediaVault</h4>
             <p style={{fontSize:12,color:'#888',lineHeight:1.5}}>Free music downloads from YouTube, Spotify, TikTok & more. Built in Uganda for East Africa.</p>
             <div style={{display:'flex',gap:8,marginTop:10}}>
-              <a href="https://youtube.com/@jaingsalim1845" target="_blank" rel="noopener" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="YouTube">▶</a>
+              <a href="https://www.youtube.com/@HermanSoftwareSolutions" target="_blank" rel="noopener" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="YouTube">▶</a>
               <a href="#" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="Spotify">S</a>
-              <a href="https://www.tiktok.com/@jaingsalim1" target="_blank" rel="noopener" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="TikTok">T</a>
+              <a href="https://www.tiktok.com/@hermansoftwaresolutions?_r=1&_t=ZS-99ixYNadBBK" target="_blank" rel="noopener" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="TikTok">T</a>
               <a href="https://www.instagram.com/jiang_salim" target="_blank" rel="noopener" style={{width:30,height:30,borderRadius:'50%',border:'1px solid #ddd',display:'flex',alignItems:'center',justifyContent:'center',color:'#888',fontSize:13,fontWeight:700}} title="Instagram">I</a>
             </div>
           </div>
