@@ -178,30 +178,91 @@ async def get_iptv_channels(country: str = Query(""), category: str = Query(""))
     import httpx
     try:
         async with httpx.AsyncClient(timeout=60) as client:
+            # Fetch all data in parallel-ish
             channels_res = await client.get("https://iptv-org.github.io/api/channels.json")
             logos_res = await client.get("https://iptv-org.github.io/api/logos.json")
             streams_res = await client.get("https://iptv-org.github.io/api/streams.json")
+            feeds_res = await client.get("https://iptv-org.github.io/api/feeds.json")
 
             channels = channels_res.json()
             logos = logos_res.json()
             streams = streams_res.json()
+            feeds = feeds_res.json()
 
-            # DEBUG: return counts and samples
+            # Build feed → channel lookup
+            feed_to_channel = {}
+            for f in feeds:
+                fid = f.get("id")
+                cid = f.get("channel")
+                if fid and cid:
+                    feed_to_channel[fid] = cid
+
+            # Build logo lookup (prefer smaller logos)
+            logo_map = {}
+            for l in logos:
+                cid = l.get("channel")
+                url = l.get("url")
+                if cid and url:
+                    if cid not in logo_map:
+                        logo_map[cid] = url
+
+            # Build stream lookup — resolve feed → channel
+            stream_map = {}
+            for s in streams:
+                if s.get("status") != "online":
+                    continue
+                # Stream can link to channel directly OR via feed
+                cid = s.get("channel")
+                if not cid and s.get("feed"):
+                    cid = feed_to_channel.get(s["feed"])
+                if cid and cid not in stream_map:
+                    stream_map[cid] = s.get("url")
+
+            # Build channel list — only channels with logo AND stream
+            filtered = []
+            for c in channels:
+                cid = c.get("id")
+                if not cid:
+                    continue
+
+                logo = logo_map.get(cid)
+                stream_url = stream_map.get(cid)
+
+                # Must have both logo and stream
+                if not logo or not stream_url:
+                    continue
+
+                # Country filter
+                if country and c.get("country") != country.upper():
+                    continue
+
+                # Category filter
+                if category:
+                    cats = [cat.lower() for cat in c.get("categories", [])]
+                    if category.lower() not in cats:
+                        continue
+
+                filtered.append({
+                    "id": cid,
+                    "name": c.get("name"),
+                    "country": c.get("country"),
+                    "categories": c.get("categories", []),
+                    "logo": logo,
+                    "website": c.get("website"),
+                    "streamUrl": stream_url,
+                })
+
+            # Sort alphabetically
+            filtered.sort(key=lambda x: x["name"].lower() if x.get("name") else "")
+
             return {
                 "success": True,
-                "debug": {
-                    "channels_count": len(channels),
-                    "logos_count": len(logos),
-                    "streams_count": len(streams),
-                    "first_channel": channels[0] if channels else None,
-                    "first_logo": logos[0] if logos else None,
-                    "first_stream": streams[0] if streams else None,
-                },
-                "data": [],
-                "total": 0
+                "data": filtered[:600],
+                "total": len(filtered)
             }
     except Exception as e:
-        return {"success": False, "error": str(e), "data": []}
+        import traceback
+        return {"success": False, "error": str(e), "trace": traceback.format_exc(), "data": []}
 
 
 @router.get("/iptv/streams")
