@@ -9,6 +9,51 @@ interface YouTubePlayerProps {
   controls?: boolean;
 }
 
+// Global flag — only load the API once
+let ytApiLoading: Promise<void> | null = null;
+
+function loadYouTubeAPI(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (window.YT?.Player) return Promise.resolve();
+  if (ytApiLoading) return ytApiLoading;
+
+  ytApiLoading = new Promise<void>((resolve) => {
+    // If API script already exists, wait for it
+    const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
+    if (existing) {
+      // Check periodically
+      const check = setInterval(() => {
+        if (window.YT?.Player) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+      // Timeout fallback
+      setTimeout(() => {
+        clearInterval(check);
+        resolve();
+      }, 5000);
+      return;
+    }
+
+    // Otherwise, load it
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    tag.async = true;
+    document.head.appendChild(tag);
+
+    // The API calls this global when ready
+    window.onYouTubeIframeAPIReady = () => {
+      resolve();
+    };
+
+    // Timeout safety
+    setTimeout(resolve, 5000);
+  });
+
+  return ytApiLoading;
+}
+
 export function YouTubePlayer({
   videoId,
   className = "",
@@ -18,70 +63,73 @@ export function YouTubePlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const [blocked, setBlocked] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  // Reset when video changes
+  // Reset blocked state when video changes
   useEffect(() => {
     setBlocked(false);
   }, [videoId]);
 
-  // Load YouTube IFrame API and attach error listener
+  // Initialize player
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    let destroyed = false;
 
-    const initPlayer = () => {
-      if (!containerRef.current || !window.YT?.Player) return;
+    const init = async () => {
+      await loadYouTubeAPI();
+      if (destroyed) return;
+
+      const container = containerRef.current;
+      if (!container || !window.YT?.Player) return;
 
       // Destroy previous player
       if (playerRef.current?.destroy) {
-        try { playerRef.current.destroy(); } catch {}
+        try {
+          playerRef.current.destroy();
+        } catch {}
         playerRef.current = null;
       }
 
-      playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: autoplay ? 1 : 0,
-          controls: controls ? 1 : 0,
-          playsinline: 1,
-          enablejsapi: 1,
-          origin: window.location.origin,
-          modestbranding: 1,
-          rel: 0,
-        },
-        events: {
-          onError: (event: any) => {
-            // 2, 5, 100 = not found / invalid
-            // 101, 150 = embedding blocked (VEVO, etc.)
-            if ([2, 5, 100, 101, 150].includes(event.data)) {
-              setBlocked(true);
-            }
+      // Clear container
+      container.innerHTML = "";
+
+      // Create a fresh child div (YouTube replaces this node)
+      const child = document.createElement("div");
+      container.appendChild(child);
+
+      try {
+        playerRef.current = new window.YT.Player(child, {
+          videoId,
+          playerVars: {
+            autoplay: autoplay ? 1 : 0,
+            controls: controls ? 1 : 0,
+            playsinline: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+            modestbranding: 1,
+            rel: 0,
           },
-        },
-      });
+          events: {
+            onReady: () => setReady(true),
+            onError: (event: any) => {
+              if ([2, 5, 100, 101, 150].includes(event.data)) {
+                setBlocked(true);
+              }
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("YouTube player init failed:", err);
+      }
     };
 
-    // Load API if not already loaded
-    if (window.YT?.Player) {
-      initPlayer();
-    } else {
-      // Check if script is already loading
-      const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
-      if (!existing) {
-        const tag = document.createElement("script");
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-      }
-      // Chain callbacks (API allows only one global callback)
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        prev?.();
-        initPlayer();
-      };
-    }
+    init();
 
     return () => {
+      destroyed = true;
       if (playerRef.current?.destroy) {
-        try { playerRef.current.destroy(); } catch {}
+        try {
+          playerRef.current.destroy();
+        } catch {}
         playerRef.current = null;
       }
     };
@@ -91,7 +139,6 @@ export function YouTubePlayer({
   if (blocked) {
     return (
       <div className={`relative aspect-video bg-navy-dark flex items-center justify-center ${className}`}>
-        {/* Faded thumbnail background */}
         <img
           src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
           alt=""
@@ -102,7 +149,6 @@ export function YouTubePlayer({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-navy-dark via-navy-dark/80 to-navy-dark/40" />
 
-        {/* Overlay content */}
         <div className="relative z-10 text-center px-6 max-w-md">
           <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
@@ -133,13 +179,12 @@ export function YouTubePlayer({
   }
 
   return (
-    <div className={`w-full h-full ${className}`}>
+    <div className={`w-full h-full relative ${className}`}>
       <div ref={containerRef} className="w-full h-full" />
     </div>
   );
 }
 
-// TypeScript — YouTube API global
 declare global {
   interface Window {
     YT: any;
