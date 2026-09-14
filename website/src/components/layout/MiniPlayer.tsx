@@ -2,6 +2,7 @@
 
 import { useSong } from "@/lib/song-context";
 import { useState, useRef } from "react";
+import { YouTubePlayer } from "@/components/shared/YouTubePlayer";
 
 export function MiniPlayer() {
   const { currentSong, isPlaying, currentTime, duration, pause, resume, stop, seekTo, isMiniPlayerActive } = useSong();
@@ -64,12 +65,7 @@ export function MiniPlayer() {
     >
       {/* Video area */}
       <div className="relative aspect-video bg-black">
-        <iframe
-          key={currentSong.id}
-          src={`https://www.youtube.com/embed/${currentSong.id}?autoplay=${isPlaying ? 1 : 0}&controls=0&enablejsapi=1&playsinline=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-          className="w-full h-full"
-          allow="autoplay; encrypted-media"
-        />
+        <YouTubePlayer videoId={currentSong.id} autoplay={isPlaying} />
 
         {/* DRAG OVERLAY - captures all drag events */}
         <div
