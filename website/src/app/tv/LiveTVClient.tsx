@@ -176,24 +176,30 @@ export function LiveTVClient() {
               />
 
               {streamError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-navy-dark/90 text-center px-6">
-                  <div>
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                    </div>
-                    <h3 className="text-white font-semibold text-lg mb-2">
-                      Stream unavailable
-                    </h3>
-                    <p className="text-gray-medium text-sm max-w-sm mx-auto">
-                      This channel isn&apos;t responding right now. Try another channel from the list below.
-                    </p>
-                  </div>
-                </div>
-              )}
+  <div className="absolute inset-0 flex items-center justify-center bg-navy-dark/90 text-center px-6">
+    <div>
+      <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <h3 className="text-white font-semibold text-lg mb-2">
+        Stream unavailable
+      </h3>
+      <p className="text-gray-medium text-sm max-w-sm mx-auto mb-4">
+        Some IPTV channels go offline. Try another channel — most work perfectly.
+      </p>
+      <button
+        onClick={closePlayer}
+        className="inline-flex items-center gap-2 rounded-full bg-teal hover:bg-teal-dark text-white px-5 py-2.5 text-sm font-semibold transition-colors"
+      >
+        Browse other channels
+      </button>
+    </div>
+  </div>
+)}
             </div>
 
             <div className="mt-4 flex items-center gap-3">
