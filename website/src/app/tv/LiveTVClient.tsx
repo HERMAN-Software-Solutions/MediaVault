@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getIPTVChannels, getIPTVStreams, type IPTVChannel } from "@/lib/iptv-api";
+import { getIPTVChannels, type IPTVChannel } from "@/lib/iptv-api";
 
 const CATEGORIES = [
   { id: "all", label: "All Channels" },
@@ -22,40 +22,109 @@ export function LiveTVClient() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [streamError, setStreamError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<any>(null);
 
-  // Load channels and streams on mount
+  // Load channels on mount
   useEffect(() => {
-  getIPTVChannels()
-    .then((res) => {
-      if (res.success) {
-        setChannels(res.data || []);
-        // Build streams map from channel data
-        const streamsMap: Record<string, any> = {};
-        (res.data || []).forEach((c: any) => {
-          if (c.streamUrl) {
-            streamsMap[c.id] = { url: c.streamUrl };
+    getIPTVChannels()
+      .then((res) => {
+        if (res.success) {
+          setChannels(res.data || []);
+          // Build streams map from channel data
+          const streamsMap: Record<string, any> = {};
+          (res.data || []).forEach((c: any) => {
+            if (c.streamUrl) {
+              streamsMap[c.id] = { url: c.streamUrl };
+            }
+          });
+          setStreams(streamsMap);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  // Handle HLS stream loading
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !selectedStreamUrl) return;
+
+    setStreamError(false);
+
+    // Clean up previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Native HLS support (Safari, iOS)
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = selectedStreamUrl;
+      video.play().catch(() => {});
+      return;
+    }
+
+    // Use hls.js for Chrome/Firefox/Edge
+    let cancelled = false;
+
+    import("hls.js").then(({ default: Hls }) => {
+      if (cancelled) return;
+
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          // Give up quickly if the stream is dead
+          manifestLoadingTimeOut: 10000,
+          manifestLoadingMaxRetry: 2,
+          levelLoadingTimeOut: 10000,
+          fragLoadingTimeOut: 20000,
+        });
+
+        hls.loadSource(selectedStreamUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+
+        hls.on(Hls.Events.ERROR, (_event: any, data: any) => {
+          if (data.fatal) {
+            console.warn("HLS fatal error:", data);
+            setStreamError(true);
+            hls.destroy();
+            hlsRef.current = null;
           }
         });
-        setStreams(streamsMap);
+
+        hlsRef.current = hls;
+      } else {
+        // Fallback: try direct src
+        video.src = selectedStreamUrl;
+        video.play().catch(() => setStreamError(true));
       }
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-  }, []);
+    });
+
+    return () => {
+      cancelled = true;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [selectedStreamUrl]);
 
   // Filter channels
   const filteredChannels = channels.filter((c) => {
-    // Category filter
     if (activeCategory !== "all") {
       const cats = c.categories.map((x) => x.toLowerCase());
       if (!cats.includes(activeCategory.toLowerCase())) return false;
     }
-    // Search filter
     if (searchQuery) {
       if (!c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     }
-    // Must have a stream
     if (!streams[c.id]) return false;
     return true;
   });
@@ -65,11 +134,20 @@ export function LiveTVClient() {
     if (!stream?.url) return;
     setSelectedChannel(channel);
     setSelectedStreamUrl(stream.url);
+  };
 
-    // Auto-play when video element mounts
-    setTimeout(() => {
-      videoRef.current?.play().catch(() => {});
-    }, 100);
+  const closePlayer = () => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.src = "";
+    }
+    setSelectedChannel(null);
+    setSelectedStreamUrl("");
+    setStreamError(false);
   };
 
   return (
@@ -88,16 +166,36 @@ export function LiveTVClient() {
       {selectedChannel && (
         <section className="bg-black">
           <div className="container-site py-6">
-            <div className="aspect-video bg-black rounded-xl overflow-hidden">
+            <div className="aspect-video bg-black rounded-xl overflow-hidden relative">
               <video
                 ref={videoRef}
-                src={selectedStreamUrl}
                 controls
                 autoPlay
                 playsInline
                 className="w-full h-full"
               />
+
+              {streamError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-navy-dark/90 text-center px-6">
+                  <div>
+                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    </div>
+                    <h3 className="text-white font-semibold text-lg mb-2">
+                      Stream unavailable
+                    </h3>
+                    <p className="text-gray-medium text-sm max-w-sm mx-auto">
+                      This channel isn&apos;t responding right now. Try another channel from the list below.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div className="mt-4 flex items-center gap-3">
               {selectedChannel.logo && (
                 <img
@@ -111,11 +209,8 @@ export function LiveTVClient() {
                 <p className="text-xs text-gray-medium">{selectedChannel.country}</p>
               </div>
               <button
-                onClick={() => {
-                  setSelectedChannel(null);
-                  setSelectedStreamUrl("");
-                }}
-                className="ml-auto text-sm text-gray-medium hover:text-white"
+                onClick={closePlayer}
+                className="ml-auto text-sm text-gray-medium hover:text-white transition-colors"
               >
                 Close
               </button>
@@ -164,7 +259,7 @@ export function LiveTVClient() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {Array.from({ length: 20 }).map((_, i) => (
                 <div key={i} className="card-base p-4 text-center animate-pulse">
-                  <div className="h-16 w-16 rounded-full bg-gray-light mx-auto mb-2" />
+                  <div className="h-16 w-16 rounded-lg bg-gray-light mx-auto mb-2" />
                   <div className="h-3 w-2/3 rounded bg-gray-light mx-auto" />
                 </div>
               ))}
