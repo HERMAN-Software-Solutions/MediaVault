@@ -197,8 +197,10 @@ async def get_iptv_channels(country: str = Query(""), category: str = Query(""))
             stream_map = {}
             for s in streams:
                 cid = s.get("channel")
-                if cid and s.get("url") and cid not in stream_map:
-                    stream_map[cid] = s["url"]
+                url = s.get("url", "")
+                # Only accept HTTPS streams — HTTP will be blocked on our HTTPS site
+               if cid and url and url.startswith("https://") and cid not in stream_map:
+                  stream_map[cid] = url
 
             # Debug counts
             with_logo = len(logo_map)
